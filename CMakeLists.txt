@@ -14,7 +14,7 @@ find_package(
     roscpp 
     sensor_msgs 
     image_transport
-    )
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -106,7 +106,7 @@ find_package(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+#  INCLUDE_DIRS 
 #  LIBRARIES optic_flow
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
@@ -119,8 +119,8 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-    #include
- ${catkin_INCLUDE_DIRS}
+    include/${PROJECT_NAME}/
+    ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -136,7 +136,11 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.cpp)
+add_executable( ${PROJECT_NAME}_node  
+    src/${PROJECT_NAME}_node.cpp
+    src/flow_controller.cpp
+    src/params.cpp
+)
 target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
