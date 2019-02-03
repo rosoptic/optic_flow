@@ -12,11 +12,3 @@ This node is the main node of the package. It takes in images and returns a posi
 #### 2.3.2 Published Topics
  - vel [geometry_msgs/TwistStamped](http://docs.ros.org/api/geometry_msgs/html/msg/TwistStamped.html)
 	 - The computed velocity of the sensor.
-
-    
-
-	
-<!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5NzMxODUzODgsMTM2MDc1ODI0MiwtOD
-U4MDY1Nzk0LC0xMDk3NzM0ODIzXX0=
--->
