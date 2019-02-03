@@ -7,11 +7,13 @@ All noses subscribing to [sensor_msgs/Image](http://docs.ros.org/api/sensor_msgs
 This node is the main node of the package. It takes in images and returns a position estimate of the robot calculated from optical flow data.
 #### Subscribed Topics
 
-	Image [
-](%28%5Bsensor_msgs/Image%5D%28http://docs.ros.org/api/sensor_msgs/html/msg/Image.html%29)  
+ - image [sensor_msgs/Image](http://docs.ros.org/api/sensor_msgs/html/msg/Image.html)
+	 - The image topic of interest.
+ - position 
+
     
 
 	
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzE3MDc3NDY2LC0xMDk3NzM0ODIzXX0=
+eyJoaXN0b3J5IjpbLTg1ODA2NTc5NCwtMTA5NzczNDgyM119
 -->
