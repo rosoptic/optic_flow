@@ -6,6 +6,7 @@
 #include <image_transport/image_transport.h>
 #include <opencv2/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
+#include <flow_algorithm.h>
 namespace optic_flow
 {
     class FlowController
@@ -20,9 +21,20 @@ namespace optic_flow
             {
                 int rate;
                 bool display_cv_debug;
-                OpticFlowParams() : rate{}, display_cv_debug{} {}
+                double corners_threshold;
+                int max_flow_corners;
+                int min_flow_corners;
+                OpticFlowParams() : rate{}, display_cv_debug{},
+                    corners_threshold{}, max_flow_corners{},
+                    min_flow_corners{}
+                {}
                 OpticFlowParams(const OpticFlowParams& params) :
-                    rate{params.rate}, display_cv_debug{params.display_cv_debug} {}
+                    rate{params.rate},
+                    display_cv_debug{params.display_cv_debug},
+                    corners_threshold{params.corners_threshold},
+                    max_flow_corners{params.max_flow_corners},
+                    min_flow_corners{params.min_flow_corners}
+                {}
             };
             OpticFlowParams getParams();
 
@@ -35,11 +47,13 @@ namespace optic_flow
             const OpticFlowParams params_;
 
             image_transport::Subscriber raw_sub_;
-
+            FlowAlgorithm flow_algorithm_;
             const static int MAX_SIZE = 5;
             const static std::string RAW_WINDOW;
+            const static std::string FLOW_WINDOW;
 
             FlowController::OpticFlowParams loadParams();
+            cv_bridge::CvImageConstPtr convert(sensor_msgs::ImageConstPtr& image);
 
             void setupDebugWindows();
             void displayDebugWindows();

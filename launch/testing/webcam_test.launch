@@ -4,6 +4,9 @@
     <node pkg="optic_flow" type="optic_flow_node" name="optic_flow_node" output = "screen">
         <remap from="image" to="/webcam/image_raw"/>
         <param name="rate" value="31"/>
+        <param name="max_flow_corners" value="400"/>
+        <param name="min_flow_corners" value="35"/>
+        <param name="corners_threshold" value="0.5"/>
         <param name="display_cv_debug" value="true"/>
     </node>
 
