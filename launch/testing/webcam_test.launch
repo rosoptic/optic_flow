@@ -4,6 +4,7 @@
     <node pkg="optic_flow" type="optic_flow_node" name="optic_flow_node" output = "screen">
         <remap from="image" to="/webcam/image_raw"/>
         <param name="rate" value="31"/>
+        <param name="display_cv_debug" value="true"/>
     </node>
 
 </launch>

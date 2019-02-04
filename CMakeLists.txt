@@ -14,7 +14,10 @@ find_package(
     roscpp 
     sensor_msgs 
     image_transport
+    cv_bridge
 )
+
+find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -139,9 +142,9 @@ include_directories(
 add_executable( ${PROJECT_NAME}_node  
     src/${PROJECT_NAME}_node.cpp
     src/flow_controller.cpp
-    src/params.cpp
 )
-target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
