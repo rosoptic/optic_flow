@@ -7,28 +7,47 @@ namespace optic_flow
 
     FlowController::FlowController(ros::NodeHandle& publicHandler,
             ros::NodeHandle& privateHandle):
-        pubHandle_{publicHandler}, priHandle_{privateHandle},
-        params_{loadParams()},
-        transport_{pubHandle_}, img_queue_{},
-        flow_algorithm_{params_.max_flow_corners}
+        pubHandle_{publicHandler}, 
+        priHandle_{privateHandle},
+        params_{},
+        transport_{pubHandle_}, 
+        img_queue_{}
     {
         ROS_INFO("Constructing FlowController");
-        raw_sub_ = transport_.subscribe("image", 5,&FlowController::enqueueFrame, this);
-        if (params_.display_cv_debug)
+        loadParams();
+        if (params_.flow_algorithm == "lucas_kanade")
         {
-            setupDebugWindows();
+            algorithm_ptr_ = std::unique_ptr<FlowAlgorithmInterface>(
+                    new LucasKanadeAlgorithm(params_.publish_cv_debug));
+        }
+        if (params_.flow_algorithm == "farneback")
+        {
+            algorithm_ptr_ = std::unique_ptr<FlowAlgorithmInterface>(
+                    new FarnebackAlgorithm(params_.publish_cv_debug));
+        }
+        else
+        {
+            std::stringstream ss{};
+            ss << "flow algorithm not recognized: "  << params_.flow_algorithm;
+            throw std::runtime_error(ss.str());
+        }
+        algorithm_ptr_->loadParams(priHandle_);
+        raw_sub_ = transport_.subscribe("image", 5,&FlowController::enqueueFrame, this);
+        if (params_.publish_cv_debug)
+        {
+            debug_pub_ = transport_.advertise("debug", 1);
         }
     }
 
     FlowController::~FlowController()
     {
         ROS_INFO("Destructing FlowController");
-        if (params_.display_cv_debug)
-        {
-            closeDebugWindows();
-        }
     }
 
+    double FlowController::getRate()
+    {
+        return params_.rate;
+    }
 
     void FlowController::enqueueFrame(const sensor_msgs::ImageConstPtr& img)
     {
@@ -36,17 +55,17 @@ namespace optic_flow
 	    img_queue_.push(img);
     }
 
-    cv_bridge::CvImageConstPtr FlowController::convert(sensor_msgs::ImageConstPtr& img)
+    cv_bridge::CvImageConstPtr FlowController::convertToCvPtr(sensor_msgs::ImageConstPtr& img)
     {
-        auto encoding = "bgr8";
+       //auto encoding = "bgr8";
         cv_bridge::CvImageConstPtr  cvImg;
         try
         {
-            cvImg = cv_bridge::toCvShare(img, encoding);
+            cvImg = cv_bridge::toCvShare(img);
         }
         catch(cv_bridge::Exception& e)
         {
-            ROS_ERROR_STREAM("Could not convert from " << img->encoding.c_str() << "to "<< encoding);
+            ROS_ERROR_STREAM("Could not convert from ");// << img->encoding.c_str() << "to "<< encoding);
 
         }
         return cvImg;
@@ -60,43 +79,32 @@ namespace optic_flow
 
         if (!img_queue_.empty())
         {
-            if (img_queue_.size() > MAX_SIZE)
+            if (img_queue_.size() > params_.max_frame_lag)
             {
-                ROS_WARN("The image queue is recieving images faster than it can process.");
+                ROS_WARN("The image queue is recieving images faster than it can process, dropping frames");
+                for (auto skipped = 0; img_queue_.size() > params_.max_frame_lag; skipped++)
+                {
+                    if (skipped >= params_.max_skipped_frames)
+                        ROS_DEBUG_STREAM("Max Skipped Frames Hit");
+                    ROS_DEBUG_STREAM("Dropping Frame: " << ros::Time::now());
+                    img_queue_.pop();
+
+                }
             }
+            auto start = ros::Time::now();
             auto frame = img_queue_.front();
-            auto cvImg =  convert(frame);
-            auto output = flow_algorithm_.process(cvImg->image);
-            auto thresholds = flow_algorithm_.getFoundVTracked();
-            auto found = std::get<0>(thresholds);
-            auto targeted = std::get<1>(thresholds);
-            auto ratio = found/(double)targeted;
-            ROS_DEBUG_STREAM("Checking if corners need recalculating: found = " << found <<
-                    " targeted = " << targeted << " ratio = " << ratio);
-            bool reinitialize = false;
-            if ( ratio < params_.corners_threshold)
+            auto cvImg =  convertToCvPtr(frame);
+            algorithm_ptr_->process(cvImg);
+            if (params_.publish_cv_debug)
             {
-                ROS_DEBUG_STREAM("Corner Ratio Threshold Hit: target = "<<
-                        params_.corners_threshold << " acutual = " << ratio);
-                reinitialize = true;
+                auto img = algorithm_ptr_->getDebugImage();
+                auto img_msg = img.toImageMsg();
+                debug_pub_.publish(img_msg);
             }
-            else if (found < params_.min_flow_corners)
-            {
-                ROS_DEBUG_STREAM("Min Detected Threshold Hit: target = " <<
-                        params_.min_flow_corners << " actual = " << found);
-                reinitialize = true;
-            }
-            if (reinitialize)
-            {
-                flow_algorithm_.triggerInitialize();
-            }
-            if (params_.display_cv_debug)
-            {
-                cv::imshow(RAW_WINDOW, cvImg->image);
-                cv::imshow(FLOW_WINDOW, output);
-                cv::waitKey(30);
-            }
-	        ROS_DEBUG_STREAM("Popping Message time => " << frame->header.stamp);
+            auto duration = ros::Time::now() - start;
+	        ROS_DEBUG_STREAM("Popping Message: recieved time => " <<
+	                frame->header.stamp << " processing time => " << duration <<
+	                " hz => " << 1/duration.toSec());
             img_queue_.pop();
 
         }
@@ -104,42 +112,19 @@ namespace optic_flow
     }
 
 
-    FlowController::OpticFlowParams FlowController::getParams()
-    {
-        return params_;
- 
-    }
-
-    FlowController::OpticFlowParams FlowController::loadParams()
+    void FlowController::loadParams()
     {
         ROS_INFO("Params:");
-        OpticFlowParams params{};
-        priHandle_.param("rate", params.rate, 30);
-        ROS_INFO_STREAM("    rate:              " << params.rate);
-        priHandle_.param("corners_threshold", params.corners_threshold, 0.4);
-        ROS_INFO_STREAM("    corners_threshold: " << params.corners_threshold);
-        priHandle_.param("max_flow_corners", params.max_flow_corners, 500);
-        ROS_INFO_STREAM("    max_flow_corners:  " << params.max_flow_corners);
-        priHandle_.param("display_cv_debug", params.display_cv_debug, false);
-        ROS_INFO_STREAM("    display_cv_debug:  " << params.display_cv_debug);
-        return params;
- 
+        priHandle_.param("rate", params_.rate, 30.0);
+        ROS_INFO_STREAM("    rate:               " << params_.rate);
+        priHandle_.param("max_frame_lag", params_.max_frame_lag, 10);
+        ROS_INFO_STREAM("    max_frame_lag:      " << params_.max_frame_lag);
+         priHandle_.param("max_skipped_frames", params_.max_skipped_frames, 3);
+        ROS_INFO_STREAM("    max_skipped_frames: " << params_.max_skipped_frames);
+         priHandle_.param("publish_cv_debug", params_.publish_cv_debug, false);
+        ROS_INFO_STREAM("    publish_cv_debug:   " << params_.publish_cv_debug);
+        priHandle_.param("flow_algorithm", params_.flow_algorithm, std::string("lucas_kanade"));
+        ROS_INFO_STREAM("    flow_algorithm:     " << params_.flow_algorithm);
     }
-
-    void FlowController::setupDebugWindows()
-    {
-        cv::namedWindow(RAW_WINDOW);
-        cv::namedWindow(FLOW_WINDOW);
-        cv::startWindowThread();
-    }
-
-    void FlowController::closeDebugWindows()
-    {
-        cv::destroyWindow(RAW_WINDOW);
-        cv::destroyWindow(FLOW_WINDOW);
-        
-        
-    }
-
 
 }
