@@ -79,9 +79,17 @@ namespace optic_flow
 
         if (!img_queue_.empty())
         {
-            if (img_queue_.size() > MAX_SIZE)
+            if (img_queue_.size() > params_.max_frame_lag)
             {
-                ROS_WARN("The image queue is recieving images faster than it can process.");
+                ROS_WARN("The image queue is recieving images faster than it can process, dropping frames");
+                for (auto skipped = 0; img_queue_.size() > params_.max_frame_lag; skipped++)
+                {
+                    if (skipped >= params_.max_skipped_frames)
+                        ROS_DEBUG_STREAM("Max Skipped Frames Hit");
+                    ROS_DEBUG_STREAM("Dropping Frame: " << ros::Time::now());
+                    img_queue_.pop();
+
+                }
             }
             auto start = ros::Time::now();
             auto frame = img_queue_.front();
@@ -108,11 +116,15 @@ namespace optic_flow
     {
         ROS_INFO("Params:");
         priHandle_.param("rate", params_.rate, 30.0);
-        ROS_INFO_STREAM("    rate:             " << params_.rate);
-        priHandle_.param("publish_cv_debug", params_.publish_cv_debug, false);
-        ROS_INFO_STREAM("    publish_cv_debug: " << params_.publish_cv_debug);
+        ROS_INFO_STREAM("    rate:               " << params_.rate);
+        priHandle_.param("max_frame_lag", params_.max_frame_lag, 10);
+        ROS_INFO_STREAM("    max_frame_lag:      " << params_.max_frame_lag);
+         priHandle_.param("max_skipped_frames", params_.max_skipped_frames, 3);
+        ROS_INFO_STREAM("    max_skipped_frames: " << params_.max_skipped_frames);
+         priHandle_.param("publish_cv_debug", params_.publish_cv_debug, false);
+        ROS_INFO_STREAM("    publish_cv_debug:   " << params_.publish_cv_debug);
         priHandle_.param("flow_algorithm", params_.flow_algorithm, std::string("lucas_kanade"));
-        ROS_INFO_STREAM("    flow_algorithm:   " << params_.flow_algorithm);
+        ROS_INFO_STREAM("    flow_algorithm:     " << params_.flow_algorithm);
     }
 
 }

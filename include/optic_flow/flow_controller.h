@@ -22,12 +22,17 @@ namespace optic_flow
             struct OpticFlowParams
             {
                 double rate;
+                int max_frame_lag;
+                int max_skipped_frames;
                 bool publish_cv_debug;
                 std::string flow_algorithm;
                 OpticFlowParams() : 
                     rate{}, 
+                    max_frame_lag{},
+                    max_skipped_frames{},
                     publish_cv_debug{},
                     flow_algorithm{}
+
                 {}
             };
 
