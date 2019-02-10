@@ -4,9 +4,9 @@
 #include <queue>
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
-#include <opencv2/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
-#include <flow_algorithm.h>
+#include <flow_algorithm_interface.h>
+#include <lucas_kanade_algorithm.h>
 namespace optic_flow
 {
     class FlowController
@@ -16,44 +16,38 @@ namespace optic_flow
             ~FlowController();
             void enqueueFrame(const sensor_msgs::ImageConstPtr& img);
             void process();
-
+            double getRate();
+        private:
             struct OpticFlowParams
             {
-                int rate;
-                bool display_cv_debug;
-                double corners_threshold;
-                int max_flow_corners;
-                int min_flow_corners;
-                OpticFlowParams() : rate{}, display_cv_debug{},
-                    corners_threshold{}, max_flow_corners{},
-                    min_flow_corners{}
-                {}
-                OpticFlowParams(const OpticFlowParams& params) :
-                    rate{params.rate},
-                    display_cv_debug{params.display_cv_debug},
-                    corners_threshold{params.corners_threshold},
-                    max_flow_corners{params.max_flow_corners},
-                    min_flow_corners{params.min_flow_corners}
+                double rate;
+                bool publish_cv_debug;
+                std::string flow_algorithm;
+                OpticFlowParams() : 
+                    rate{}, 
+                    publish_cv_debug{},
+                    flow_algorithm{}
                 {}
             };
-            OpticFlowParams getParams();
 
-        private:
             ros::NodeHandle pubHandle_;
             ros::NodeHandle priHandle_;
             image_transport::ImageTransport transport_;
             std::queue<sensor_msgs::ImageConstPtr> img_queue_;
 
-            const OpticFlowParams params_;
+            OpticFlowParams params_;
 
             image_transport::Subscriber raw_sub_;
-            FlowAlgorithm flow_algorithm_;
+            image_transport::Publisher debug_pub_;
+
+
+            std::unique_ptr<FlowAlgorithmInterface> algorithm_ptr_;
             const static int MAX_SIZE = 5;
             const static std::string RAW_WINDOW;
             const static std::string FLOW_WINDOW;
 
-            FlowController::OpticFlowParams loadParams();
-            cv_bridge::CvImageConstPtr convert(sensor_msgs::ImageConstPtr& image);
+            void loadParams();
+            cv_bridge::CvImageConstPtr convertToCvPtr(sensor_msgs::ImageConstPtr& image);
 
             void setupDebugWindows();
             void displayDebugWindows();

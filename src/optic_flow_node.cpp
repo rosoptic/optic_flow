@@ -9,8 +9,7 @@ int main(int argc, char **argv)
   ros::NodeHandle nh{};
   ros::NodeHandle pnh{"~"};
   optic_flow::FlowController controller{nh, pnh};
-  auto params = controller.getParams();
-  auto rate = ros::Rate(params.rate);
+  auto rate = ros::Rate(controller.getRate());
   while (ros::ok())
   {
     ros::spinOnce();

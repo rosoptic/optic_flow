@@ -1,13 +1,27 @@
 <launch>
     <!-- launch video stream -->
-    <node pkg="cv_camera" type="cv_camera_node" name="webcam"/>
+    <node pkg="cv_camera" type="cv_camera_node" name="webcam">
+        <rosparam>
+            rate: 30 
+        </rosparam>
+
+    </node>
+    <group ns="optic_flow">
     <node pkg="optic_flow" type="optic_flow_node" name="optic_flow_node" output = "screen">
         <remap from="image" to="/webcam/image_raw"/>
-        <param name="rate" value="31"/>
-        <param name="max_flow_corners" value="400"/>
-        <param name="min_flow_corners" value="35"/>
-        <param name="corners_threshold" value="0.5"/>
-        <param name="display_cv_debug" value="true"/>
-    </node>
+        <rosparam>
+            rate: 31
+            publish_cv_debug: true
+            flow_algorithm: "lucas_kanade"
+            lucas_kanade:
+                max_flow_corners: 400
+                min_flow_corners: 400
+                corners_threshold: 0.5
+        </rosparam>
+   </node>
+   </group>
+   <node pkg="image_view" type="image_view" name="flow_debug_viewer">
+       <remap from="image" to="/optic_flow/debug"/>
+   </node>
 
 </launch>
