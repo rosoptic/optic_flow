@@ -143,6 +143,7 @@ add_executable( ${PROJECT_NAME}_node
     src/${PROJECT_NAME}_node.cpp
     src/flow_controller.cpp
     src/lucas_kanade_algorithm.cpp
+    src/farneback_algorithm.cpp
 )
 target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${OpenCV_LIBS})
 

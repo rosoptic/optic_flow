@@ -2,14 +2,15 @@
 
 namespace optic_flow
 {
-    LucasKanadeAlgorithm::LucasKanadeAlgorithm() :
+    LucasKanadeAlgorithm::LucasKanadeAlgorithm(bool debug) :
         tracked_elements_{0},
         found_elements_{0},
         do_initialize_{true},
         window_size_{31,31},
         points_{},
         sub_window_size_{10,10},
-        end_criteria_{cv::TermCriteria::COUNT|cv::TermCriteria::EPS, 20, 0.03}
+        end_criteria_{cv::TermCriteria::COUNT|cv::TermCriteria::EPS, 20, 0.03},
+        debug_{debug}
     {
     }
 
@@ -26,7 +27,7 @@ namespace optic_flow
 
     cv_bridge::CvImage LucasKanadeAlgorithm::getDebugImage()
     {
-        return cv_bridge::CvImage(std_msgs::Header(),"mono8",grey_ );
+        return cv_bridge::CvImage(std_msgs::Header(),"bgr8",debug_img_);
     }
 
 
@@ -40,6 +41,8 @@ namespace optic_flow
     {
         ROS_DEBUG("Procesing image" );
         cv::cvtColor(img->image, grey_, cv::COLOR_BGR2GRAY);
+        if (debug_)
+            img->image.copyTo(debug_img_);
         if (do_initialize_)
         {
             ROS_DEBUG("Initializing flow data");
@@ -70,7 +73,9 @@ namespace optic_flow
                 else
                     found_elements_++;
 
-                cv::circle(grey_, points_[1][i], 3, cv::Scalar(0,255,0), -1, 8);
+                if (debug_)
+                    cv::circle(debug_img_, points_[1][i], 3, cv::Scalar(0,255,0), -1, 8);
+
 
             }
             ROS_DEBUG_STREAM("corners found = " << found_elements_ << " corners tracked = "  << tracked_elements_);

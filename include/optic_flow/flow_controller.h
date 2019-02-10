@@ -7,6 +7,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <flow_algorithm_interface.h>
 #include <lucas_kanade_algorithm.h>
+#include <farneback_algorithm.h>
 namespace optic_flow
 {
     class FlowController

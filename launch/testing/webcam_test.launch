@@ -11,8 +11,16 @@
         <remap from="image" to="/webcam/image_raw"/>
         <rosparam>
             rate: 31
-            publish_cv_debug: true
-            flow_algorithm: "lucas_kanade"
+            publish_cv_debug: false 
+            flow_algorithm: "farneback"
+            farneback:
+                pyr_scale: 0.5
+                pyr_levels: 1 
+                win_size: 10
+                iterations: 1  
+                poly_n: 5 
+                poly_sigma: 1.1
+                debug_grid: 25 
             lucas_kanade:
                 max_flow_corners: 400
                 min_flow_corners: 400

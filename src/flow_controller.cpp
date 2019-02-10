@@ -17,7 +17,13 @@ namespace optic_flow
         loadParams();
         if (params_.flow_algorithm == "lucas_kanade")
         {
-            algorithm_ptr_ = std::unique_ptr<FlowAlgorithmInterface>(new LucasKanadeAlgorithm());
+            algorithm_ptr_ = std::unique_ptr<FlowAlgorithmInterface>(
+                    new LucasKanadeAlgorithm(params_.publish_cv_debug));
+        }
+        if (params_.flow_algorithm == "farneback")
+        {
+            algorithm_ptr_ = std::unique_ptr<FlowAlgorithmInterface>(
+                    new FarnebackAlgorithm(params_.publish_cv_debug));
         }
         else
         {
@@ -77,6 +83,7 @@ namespace optic_flow
             {
                 ROS_WARN("The image queue is recieving images faster than it can process.");
             }
+            auto start = ros::Time::now();
             auto frame = img_queue_.front();
             auto cvImg =  convertToCvPtr(frame);
             algorithm_ptr_->process(cvImg);
@@ -86,7 +93,10 @@ namespace optic_flow
                 auto img_msg = img.toImageMsg();
                 debug_pub_.publish(img_msg);
             }
-	        ROS_DEBUG_STREAM("Popping Message time => " << frame->header.stamp);
+            auto duration = ros::Time::now() - start;
+	        ROS_DEBUG_STREAM("Popping Message: recieved time => " <<
+	                frame->header.stamp << " processing time => " << duration <<
+	                " hz => " << 1/duration.toSec());
             img_queue_.pop();
 
         }

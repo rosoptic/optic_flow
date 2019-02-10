@@ -10,7 +10,7 @@ namespace optic_flow
     class LucasKanadeAlgorithm : public FlowAlgorithmInterface
     {
         public:
-            LucasKanadeAlgorithm();
+            LucasKanadeAlgorithm(bool debug);
             void process(const cv_bridge::CvImageConstPtr& input) override;
             void loadParams(ros::NodeHandle& priHandle) override;
             cv_bridge::CvImage getDebugImage() override;
@@ -30,6 +30,7 @@ namespace optic_flow
             int tracked_elements_;
             int found_elements_;
             bool do_initialize_;
+            bool debug_;
             std::vector<cv::Point2f> points_[2];
             cv::Size sub_window_size_;
             cv::Size window_size_;
@@ -37,6 +38,8 @@ namespace optic_flow
             cv::Mat img_;
             cv::Mat grey_;
             cv::Mat prev_grey_;
+            cv::Mat debug_img_;
+
 
             void processFrame(const cv_bridge::CvImageConstPtr& input);
             bool isReadyToRecalculate();
