@@ -1,0 +1,17 @@
+rate: 31
+publish_cv_debug: true 
+max_frame_lag: 5
+max_skipped_frames: 3
+flow_algorithm: "farneback"
+farneback:
+    pyr_scale: 0.5
+    pyr_levels: 1 
+    win_size: 10
+    iterations: 1  
+    poly_n: 5 
+    poly_sigma: 1.1
+    debug_grid: 25 
+lucas_kanade:
+    max_flow_corners: 400
+    min_flow_corners: 400
+    corners_threshold: 0.5

@@ -1,7 +1,7 @@
 #ifndef FLOW_CONTROLLER_H
 #define FLOW_CONTROLLER_H
 #include <ros/ros.h>
-#include <queue>
+#include <image_queue.h>
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -14,7 +14,6 @@ namespace optic_flow
     {
         public:
             FlowController(ros::NodeHandle &publicHandle, ros::NodeHandle& privateHandle);
-            ~FlowController();
             void enqueueFrame(const sensor_msgs::ImageConstPtr& img);
             void process();
             double getRate();
@@ -39,7 +38,7 @@ namespace optic_flow
             ros::NodeHandle pubHandle_;
             ros::NodeHandle priHandle_;
             image_transport::ImageTransport transport_;
-            std::queue<sensor_msgs::ImageConstPtr> img_queue_;
+            ImageQueue img_queue_;
 
             OpticFlowParams params_;
 
