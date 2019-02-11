@@ -127,9 +127,13 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/optic_flow.cpp
-# )
+add_library(${PROJECT_NAME}
+    src/flow_controller.cpp
+    src/image_queue.cpp
+    src/lucas_kanade_algorithm.cpp
+    src/farneback_algorithm.cpp
+)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -141,11 +145,8 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable( ${PROJECT_NAME}_node  
     src/${PROJECT_NAME}_node.cpp
-    src/flow_controller.cpp
-    src/lucas_kanade_algorithm.cpp
-    src/farneback_algorithm.cpp
 )
-target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 
 ## Rename C++ executable without prefix
@@ -203,10 +204,10 @@ target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${OpenCV_LIBS})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_optic_flow.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+catkin_add_gtest(${PROJECT_NAME}-test test/test_image_queue.cpp)
+if(TARGET ${PROJECT_NAME}-test)
+    target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
