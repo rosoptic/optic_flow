@@ -1,0 +1,10 @@
+<launch>
+    <node pkg="rosbag" type="play" name="player" output="screen" args="-l $(find optic_flow)/test/data/up_down.bag"/>
+    <include file="$(find optic_flow)/launch/optic_flow.launch">
+        <!--        <arg name="params_name"  value="testing.yaml"/>-->
+    </include>
+    <node pkg="image_view" type="image_view" name="flow_debug_viewer">
+        <remap from="image" to="/optic_flow/debug"/>
+    </node>
+
+</launch>

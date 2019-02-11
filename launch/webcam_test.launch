@@ -1,0 +1,14 @@
+<launch>
+    <node pkg="cv_camera" type="cv_camera_node" name="webcam">
+        <rosparam>
+            rate: 30 
+        </rosparam>
+    </node>
+    <include file="$(find optic_flow)/launch/optic_flow.launch">
+        <!--        <arg name="params_name"  value="testing.yaml"/>-->
+    </include>
+    <node pkg="image_view" type="image_view" name="flow_debug_viewer">
+        <remap from="image" to="/optic_flow/debug"/>
+    </node>
+
+</launch>

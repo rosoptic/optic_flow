@@ -1,0 +1,11 @@
+<launch>
+
+    <arg name="params_name" default="optic_flow.yaml"/>
+    <group ns="optic_flow">
+        <node pkg="optic_flow" type="optic_flow_node" name="optic_flow_node" output = "screen">
+            <remap from="image" to="/webcam/image_raw"/>
+            <rosparam command="load" file="$(find optic_flow)/params/$(arg params_name)"/>
+        </node>
+    </group>
+
+</launch>

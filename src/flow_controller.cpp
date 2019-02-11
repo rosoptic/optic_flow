@@ -10,11 +10,10 @@ namespace optic_flow
         pubHandle_{publicHandler}, 
         priHandle_{privateHandle},
         params_{},
-        transport_{pubHandle_}, 
-        img_queue_{}
+        transport_{pubHandle_}
     {
-        ROS_INFO("Constructing FlowController");
         loadParams();
+        img_queue_ = ImageQueue{params_.max_frame_lag, params_.max_skipped_frames};
         if (params_.flow_algorithm == "lucas_kanade")
         {
             algorithm_ptr_ = std::unique_ptr<FlowAlgorithmInterface>(
@@ -39,11 +38,6 @@ namespace optic_flow
         }
     }
 
-    FlowController::~FlowController()
-    {
-        ROS_INFO("Destructing FlowController");
-    }
-
     double FlowController::getRate()
     {
         return params_.rate;
@@ -52,7 +46,7 @@ namespace optic_flow
     void FlowController::enqueueFrame(const sensor_msgs::ImageConstPtr& img)
     {
 	    ROS_DEBUG_STREAM("Recieved Message time => " << img->header.stamp);
-	    img_queue_.push(img);
+	    img_queue_.pushFrame(img);
     }
 
     cv_bridge::CvImageConstPtr FlowController::convertToCvPtr(sensor_msgs::ImageConstPtr& img)
@@ -77,22 +71,10 @@ namespace optic_flow
 	    ROS_DEBUG_STREAM("Processing img_queue_ size: " << img_queue_.size());
         
 
-        if (!img_queue_.empty())
+        if (img_queue_.size())
         {
-            if (img_queue_.size() > params_.max_frame_lag)
-            {
-                ROS_WARN("The image queue is recieving images faster than it can process, dropping frames");
-                for (auto skipped = 0; img_queue_.size() > params_.max_frame_lag; skipped++)
-                {
-                    if (skipped >= params_.max_skipped_frames)
-                        ROS_DEBUG_STREAM("Max Skipped Frames Hit");
-                    ROS_DEBUG_STREAM("Dropping Frame: " << ros::Time::now());
-                    img_queue_.pop();
-
-                }
-            }
             auto start = ros::Time::now();
-            auto frame = img_queue_.front();
+            auto frame = img_queue_.popFrame();
             auto cvImg =  convertToCvPtr(frame);
             algorithm_ptr_->process(cvImg);
             if (params_.publish_cv_debug)
@@ -102,11 +84,13 @@ namespace optic_flow
                 debug_pub_.publish(img_msg);
             }
             auto duration = ros::Time::now() - start;
-	        ROS_DEBUG_STREAM("Popping Message: recieved time => " <<
+	        ROS_DEBUG_STREAM("Processed Frame: recieved time => " <<
 	                frame->header.stamp << " processing time => " << duration <<
 	                " hz => " << 1/duration.toSec());
-            img_queue_.pop();
-
+        }
+        else
+        {
+            ROS_DEBUG("No frames available");
         }
         
     }
